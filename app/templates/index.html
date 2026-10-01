@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Patient Readmission Risk Prediction</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 30px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            margin-top: 30px;
+        }
+
+        .section h2 {
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 8px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .button {
+            text-align: center;
+            margin-top: 35px;
+        }
+
+        button {
+            padding: 14px 35px;
+            font-size: 17px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #222;
+            color: white;
+        }
+
+        button:hover {
+            background: #444;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 25px;
+            text-align: center;
+            border-radius: 8px;
+            background: #f1f1f1;
+        }
+
+        .result h2 {
+            margin-top: 0;
+        }
+
+        .probability {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .error {
+            margin-top: 20px;
+            padding: 15px;
+            background: #ffe5e5;
+            color: #b00000;
+            border-radius: 6px;
+        }
+
+        .note {
+        
+            margin-top: 25px;
+            padding: 15px;
+            background: #f1f1f1;
+            color: #555;
+            border-radius: 6px;
+        }
+
+        @media(max-width: 700px) {
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                width: 95%;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <h1>Patient Readmission Risk Prediction</h1>
+
+    <p class="subtitle">
+        ML-based prediction of 30-day hospital readmission
+    </p>
+
+
+    <form action="/predict" method="POST">
+
+
+        <!-- ================================================= -->
+        <!-- PATIENT INFORMATION -->
+        <!-- ================================================= -->
+
+        <div class="section">
+
+            <h2>Patient Information</h2>
+
+            <div class="form-grid">
+
+                <div>
+                    <label>Race</label>
+
+                    <select name="race" required>
+
+                        <option value="Caucasian">Caucasian</option>
+                        <option value="AfricanAmerican">AfricanAmerican</option>
+                        <option value="Asian">Asian</option>
+                        <option value="Other">Other</option>
+                        <option value="Unknown">Unknown</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Gender</label>
+
+                    <select name="gender" required>
+
+                        <option value="Female">Female</option>
+                        <option value="Male">Male</option>
+                        <option value="Unknown/Invalid">Unknown/Invalid</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Age</label>
+
+                    <select name="age" required>
+
+                        <option value="[0-10)">[0-10)</option>
+                        <option value="[10-20)">[10-20)</option>
+                        <option value="[20-30)">[20-30)</option>
+                        <option value="[30-40)">[30-40)</option>
+                        <option value="[40-50)">[40-50)</option>
+                        <option value="[50-60)">[50-60)</option>
+                        <option value="[60-70)">[60-70)</option>
+                        <option value="[70-80)">[70-80)</option>
+                        <option value="[80-90)">[80-90)</option>
+                        <option value="[90-100)">[90-100)</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Time in Hospital</label>
+
+                    <input
+                        type="number"
+                        name="time_in_hospital"
+                        min="1"
+                        max="14"
+                        required>
+                </div>
+
+
+                <div>
+                    <label>Number of Lab Procedures</label>
+
+                    <input
+                        type="number"
+                        name="num_lab_procedures"
+                        min="0"
+                        required>
+                </div>
+
+
+                <div>
+                    <label>Number of Procedures</label>
+
+                    <input
+                        type="number"
+                        name="num_procedures"
+                        min="0"
+                        required>
+                </div>
+
+
+                <div>
+                    <label>Number of Medications</label>
+
+                    <input
+                        type="number"
+                        name="num_medications"
+                        min="0"
+                        required>
+                </div>
+
+
+                <div>
+                    <label>Number of Diagnoses</label>
+
+                    <input
+                        type="number"
+                        name="number_diagnoses"
+                        min="0"
+                        required>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- HOSPITAL INFORMATION -->
+        <!-- ================================================= -->
+
+        <div class="section">
+
+            <h2>Hospital Information</h2>
+
+            <div class="form-grid">
+
+                <div>
+                    <label>Admission Type ID</label>
+
+                    <input
+                        type="number"
+                        name="admission_type_id"
+                        required>
+                </div>
+
+
+                <div>
+                    <label>Discharge Disposition ID</label>
+
+                    <input
+                        type="number"
+                        name="discharge_disposition_id"
+                        required>
+                </div>
+
+
+                <div>
+                    <label>Admission Source ID</label>
+
+                    <input
+                        type="number"
+                        name="admission_source_id"
+                        required>
+                </div>
+
+
+                <div>
+                    <label>Outpatient Visits</label>
+
+                    <input
+                        type="number"
+                        name="number_outpatient"
+                        min="0"
+                        required>
+                </div>
+
+
+                <div>
+                    <label>Emergency Visits</label>
+
+                    <input
+                        type="number"
+                        name="number_emergency"
+                        min="0"
+                        required>
+                </div>
+
+
+                <div>
+                    <label>Inpatient Visits</label>
+
+                    <input
+                        type="number"
+                        name="number_inpatient"
+                        min="0"
+                        required>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- DIAGNOSIS -->
+        <!-- ================================================= -->
+
+        <div class="section">
+
+            <h2>Diagnosis</h2>
+
+            <div class="form-grid">
+
+                <div>
+                    <label>Primary Diagnosis</label>
+
+                    <input
+                        type="text"
+                        name="diag_1"
+                        placeholder="Example: 250.83"
+                        required>
+                </div>
+
+
+                <div>
+                    <label>Secondary Diagnosis</label>
+
+                    <input
+                        type="text"
+                        name="diag_2"
+                        placeholder="Example: 250.01"
+                        required>
+                </div>
+
+
+                <div>
+                    <label>Additional Diagnosis</label>
+
+                    <input
+                        type="text"
+                        name="diag_3"
+                        placeholder="Example: 403"
+                        required>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- MEDICATIONS -->
+        <!-- ================================================= -->
+
+        <div class="section">
+
+            <h2>Diabetes Medication</h2>
+
+            <div class="form-grid">
+
+
+                <div>
+                    <label>Metformin</label>
+
+                    <select name="metformin">
+
+                        <option>No</option>
+                        <option>Steady</option>
+                        <option>Up</option>
+                        <option>Down</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Repaglinide</label>
+
+                    <select name="repaglinide">
+
+                        <option>No</option>
+                        <option>Steady</option>
+                        <option>Up</option>
+                        <option>Down</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Nateglinide</label>
+
+                    <select name="nateglinide">
+
+                        <option>No</option>
+                        <option>Steady</option>
+                        <option>Up</option>
+                        <option>Down</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Chlorpropamide</label>
+
+                    <select name="chlorpropamide">
+
+                        <option>No</option>
+                        <option>Steady</option>
+                        <option>Up</option>
+                        <option>Down</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Glimepiride</label>
+
+                    <select name="glimepiride">
+
+                        <option>No</option>
+                        <option>Steady</option>
+                        <option>Down</option>
+                        <option>Up</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Acetohexamide</label>
+
+                    <select name="acetohexamide">
+
+                        <option>No</option>
+                        <option>Steady</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Glipizide</label>
+
+                    <select name="glipizide">
+
+                        <option>No</option>
+                        <option>Steady</option>
+                        <option>Up</option>
+                        <option>Down</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Glyburide</label>
+
+                    <select name="glyburide">
+
+                        <option>No</option>
+                        <option>Steady</option>
+                        <option>Up</option>
+                        <option>Down</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Tolbutamide</label>
+
+                    <select name="tolbutamide">
+
+                        <option>No</option>
+                        <option>Steady</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Pioglitazone</label>
+
+                    <select name="pioglitazone">
+
+                        <option>No</option>
+                        <option>Steady</option>
+                        <option>Up</option>
+                        <option>Down</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Rosiglitazone</label>
+
+                    <select name="rosiglitazone">
+
+                        <option>No</option>
+                        <option>Steady</option>
+                        <option>Up</option>
+                        <option>Down</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Acarbose</label>
+
+                    <select name="acarbose">
+
+                        <option>No</option>
+                        <option>Steady</option>
+                        <option>Up</option>
+                        <option>Down</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Miglitol</label>
+
+                    <select name="miglitol">
+
+                        <option>No</option>
+                        <option>Steady</option>
+                        <option>Down</option>
+                        <option>Up</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Troglitazone</label>
+
+                    <select name="troglitazone">
+
+                        <option>No</option>
+                        <option>Steady</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Tolazamide</label>
+
+                    <select name="tolazamide">
+
+                        <option>No</option>
+                        <option>Steady</option>
+                        <option>Up</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Examide</label>
+
+                    <select name="examide">
+
+                        <option>No</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Citoglipton</label>
+
+                    <select name="citoglipton">
+
+                        <option>No</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Insulin</label>
+
+                    <select name="insulin">
+
+                        <option>No</option>
+                        <option>Up</option>
+                        <option>Steady</option>
+                        <option>Down</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Glyburide-Metformin</label>
+
+                    <select name="glyburide-metformin">
+
+                        <option>No</option>
+                        <option>Steady</option>
+                        <option>Down</option>
+                        <option>Up</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Glipizide-Metformin</label>
+
+                    <select name="glipizide-metformin">
+
+                        <option>No</option>
+                        <option>Steady</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Glimepiride-Pioglitazone</label>
+
+                    <select name="glimepiride-pioglitazone">
+
+                        <option>No</option>
+                        <option>Steady</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Metformin-Rosiglitazone</label>
+
+                    <select name="metformin-rosiglitazone">
+
+                        <option>No</option>
+                        <option>Steady</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Metformin-Pioglitazone</label>
+
+                    <select name="metformin-pioglitazone">
+
+                        <option>No</option>
+                        <option>Steady</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Change</label>
+
+                    <select name="change">
+
+                        <option>No</option>
+                        <option>Ch</option>
+
+                    </select>
+                </div>
+
+
+                <div>
+                    <label>Diabetes Medication</label>
+
+                    <select name="diabetesMed">
+
+                        <option>No</option>
+                        <option>Yes</option>
+
+                    </select>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- BUTTON -->
+        <!-- ================================================= -->
+
+        <div class="button">
+
+            <button type="submit">
+                Predict Readmission Risk
+            </button>
+
+        </div>
+
+    </form>
+
+
+    <!-- ================================================= -->
+    <!-- RESULT -->
+    <!-- ================================================= -->
+
+    {% if prediction is not none %}
+
+    <div class="result">
+
+        <h2>{{ result }}</h2>
+
+        <p>Readmission Probability</p>
+
+        <div class="probability">
+            {{ probability }}%
+        </div>
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- ================================================= -->
+    <!-- ERROR -->
+    <!-- ================================================= -->
+
+    {% if error %}
+
+    <div class="error">
+
+        <strong>Error:</strong>
+
+        {{ error }}
+
+    </div>
+
+    {% endif %}
+
+
+    <div class="note">
+
+        <strong>Important:</strong>
+
+        This system is an ML-based research and prediction tool.
+        It is not a medical diagnosis and should not replace
+        professional medical advice.
+
+    </div>
+
+
+</div>
+
+</body>
+
+</html>
